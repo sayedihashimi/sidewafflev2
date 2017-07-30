@@ -37,5 +37,9 @@
               PackagePath="Content/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <Target Name="GetNuGetPath" Outputs="@(NuGetPackOutput)">
+    <Message Text="NuGetPackOutput: [@(NuGetPackOutput)]" Importance="high"/>
+  </Target>
+
   <!-- created with SideWaffle -->
 </Project>
