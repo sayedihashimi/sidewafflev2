@@ -18,7 +18,7 @@
 
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)'=='' ">Debug</Configuration>
-        <TemplateSourceRoot Condition=" '$(TemplateSourceRoot)'=='' ">$(MSBuildProjectDirectory)\</TemplateSourceRoot>
+        <TemplateSourceRoot Condition=" '$(TemplateSourceRoot)'=='' ">$(MSBuildProjectDirectory)\..\</TemplateSourceRoot>
         <TemplateOutputPath Condition=" '$(TemplateOutputPath)'=='' ">bin\$(Configuration)\templates\</TemplateOutputPath>
     </PropertyGroup>
 
@@ -32,28 +32,41 @@
     <PropertyGroup>
         <ProcessTemplatesDependsOn>
             $(ProcessTemplatesDependsOn);
-            FindTemplatePackProjFiles;
-            BuildTemplatePackNuGetProjFiles;
-            AddTemplateNuGetPackagesToVsix;
+            BuildTemplateNuGetPackages;
+            BuildVsTemplateFiles;
         </ProcessTemplatesDependsOn>
     </PropertyGroup>
+
     <Target Name="ProcessTemplates" 
             DependsOnTargets="$(ProcessTemplatesDependsOn)"
             BeforeTargets="Compile" />
 
+    <!--=====================================================
+    Targets related to building/handling the template .nupkg files
+    =========================================================-->
+    <PropertyGroup>
+        <BuildTemplateNuGetPackagesDependsOn>
+            $(BuildTemplateNuGetPackagesDependsOn);
+            FindTemplatePackProjFiles;
+            BuildTemplatePackNuGetProjFiles;
+            AddTemplateNuGetPackagesToVsix;
+        </BuildTemplateNuGetPackagesDependsOn>
+    </PropertyGroup>
+
+    <Target Name="BuildTemplateNuGetPackages" DependsOnTargets="$(BuildTemplateNuGetPackagesDependsOn)" />
+
     <Target Name="FindTemplatePackProjFiles">
         <!-- Finds files in the project matching templatepack*.proj -->
         <ItemGroup>
-            <TemplatePackNuGetProj Include="$(TemplateSourceRoot)**/templatepack*.proj" />
+            <TemplatePackNuGetProj Include="$(MSBuildProjectDirectory)/**/templatepack*.proj" />
         </ItemGroup>
-        <Message Text="Templates in [$(TemplateSourceRoot)] found: @(TemplatePackNuGetProj)" Importance="low" />
+        <Message Text="Templates in [$(MSBuildProjectDirectory)] found: @(TemplatePackNuGetProj)" Importance="low" />
     </Target>
 
     <Target Name="BuildTemplatePackNuGetProjFiles" 
             Outputs="%(TemplatePackNuGetProj.Identity)">
 
             <PropertyGroup>
-                <!-- $([System.IO.Path]::GetFullPath('$( -->
                 <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">%(TemplatePackNuGetProj.Identity)</_cTemplateProj>
                 <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">$([System.IO.Path]::GetFullPath('$(_cTemplateProj)'))</_cTemplateProj>
             </PropertyGroup>
@@ -82,5 +95,25 @@
                 <!-- <VSIXSubPath>%(_ls-ItemTemplatesOutputs.OutputPathFolder)</VSIXSubPath> -->
             </VSIXSourceItem>
         </ItemGroup>
+    </Target>
+
+    <!--=====================================================
+    Targets relating to converting .vstemplate to a template .zip
+    =========================================================-->
+    <PropertyGroup>
+        <BuildVsTemplateFilesDependsOn>
+            $(BuildVsTemplateFilesDependsOn);
+            FindVstemplateFiles;
+        </BuildVsTemplateFilesDependsOn>
+    </PropertyGroup>
+    <Target Name="BuildVsTemplateFiles" DependsOnTargets="$(BuildVsTemplateFilesDependsOn)" />
+
+    <Target Name="FindVstemplateFiles">
+        <Message Text="Looking for .vstemplate files in [$(TemplateSourceRoot)]" Importance="low" />
+        <ItemGroup>
+            <_vstemplateTemp Include="$(TemplateSourceRoot)**/*.vstemplate" Exclude="$(VsTemplateFilesExclude)" />
+            <VsTemplateFiles Include="$([System.IO.Path]::GetFullPath(' %(_vstemplateTemp.Identity) '))" />
+        </ItemGroup>
+        <Message Text=".vstemplate files found: [@(VsTemplateFiles)]" Importance="low" />
     </Target>
 </Project>
