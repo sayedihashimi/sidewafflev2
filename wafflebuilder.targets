@@ -1,6 +1,6 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <!--
+  <!--
     1. Find templatepack proj files
     2. Foreach templatepack proj file
        2.1 Call msbuild.exe /t:Pack /p:OutputPath=$(OutputPath)waffles/
@@ -13,109 +13,144 @@
        4.3 create .zip file from items and add to vsix at /output/ProjectTemplates/CSharp/<NPD node path from .vstemplate>/foo.zip
     -->
 
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)'=='' ">Debug</Configuration>
+    <TemplateSourceRoot Condition=" '$(TemplateSourceRoot)'=='' ">$(MSBuildProjectDirectory)\..\</TemplateSourceRoot>
+    <TemplateOutputPath Condition=" '$(TemplateOutputPath)'=='' ">bin\$(Configuration)\templates\</TemplateOutputPath>
+  </PropertyGroup>
 
-
-
-    <PropertyGroup>
-        <Configuration Condition=" '$(Configuration)'=='' ">Debug</Configuration>
-        <TemplateSourceRoot Condition=" '$(TemplateSourceRoot)'=='' ">$(MSBuildProjectDirectory)\..\</TemplateSourceRoot>
-        <TemplateOutputPath Condition=" '$(TemplateOutputPath)'=='' ">bin\$(Configuration)\templates\</TemplateOutputPath>
-    </PropertyGroup>
-
-    <!--
+  <!--
         templatepack.proj files go into the TemplatePackNuGetProj item list
     -->
-    <ItemGroup>
-        <!--<TemplatePackNuGetProj Include="C:\data\mycode\sidewafflev2\templatepack.proj" />-->
-    </ItemGroup>
+  <ItemGroup>
+    <VsTemplateZipDefaultFiles Include="C:\data\mycode\sidewafflev2\project-icon.png"/>
+  </ItemGroup>
 
-    <PropertyGroup>
-        <ProcessTemplatesDependsOn>
-            $(ProcessTemplatesDependsOn);
-            BuildTemplateNuGetPackages;
-            BuildVsTemplateFiles;
-        </ProcessTemplatesDependsOn>
-    </PropertyGroup>
+  <PropertyGroup>
+    <ProcessTemplatesDependsOn>
+      $(ProcessTemplatesDependsOn);
+      BuildTemplateNuGetPackages;
+      BuildVsTemplateFiles;
+    </ProcessTemplatesDependsOn>
+  </PropertyGroup>
 
-    <Target Name="ProcessTemplates" 
-            DependsOnTargets="$(ProcessTemplatesDependsOn)"
-            BeforeTargets="Compile" />
+  <Target Name="ProcessTemplates"
+          DependsOnTargets="$(ProcessTemplatesDependsOn)"
+          BeforeTargets="Compile" />
 
-    <!--=====================================================
+  <!--=====================================================
     Targets related to building/handling the template .nupkg files
     =========================================================-->
+  <PropertyGroup>
+    <BuildTemplateNuGetPackagesDependsOn>
+      $(BuildTemplateNuGetPackagesDependsOn);
+      FindTemplatePackProjFiles;
+      BuildTemplatePackNuGetProjFiles;
+      AddTemplateNuGetPackagesToVsix;
+    </BuildTemplateNuGetPackagesDependsOn>
+  </PropertyGroup>
+
+  <Target Name="BuildTemplateNuGetPackages" DependsOnTargets="$(BuildTemplateNuGetPackagesDependsOn)" />
+
+  <Target Name="FindTemplatePackProjFiles">
+    <!-- Finds files in the project matching templatepack*.proj -->
+    <ItemGroup>
+      <TemplatePackNuGetProj Include="$(MSBuildProjectDirectory)/**/templatepack*.proj" />
+    </ItemGroup>
+    <Message Text="Templates in [$(MSBuildProjectDirectory)] found: @(TemplatePackNuGetProj)" Importance="low" />
+  </Target>
+
+  <Target Name="BuildTemplatePackNuGetProjFiles"
+          Outputs="%(TemplatePackNuGetProj.Identity)">
+
     <PropertyGroup>
-        <BuildTemplateNuGetPackagesDependsOn>
-            $(BuildTemplateNuGetPackagesDependsOn);
-            FindTemplatePackProjFiles;
-            BuildTemplatePackNuGetProjFiles;
-            AddTemplateNuGetPackagesToVsix;
-        </BuildTemplateNuGetPackagesDependsOn>
+      <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">%(TemplatePackNuGetProj.Identity)</_cTemplateProj>
+      <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">$([System.IO.Path]::GetFullPath('$(_cTemplateProj)'))</_cTemplateProj>
     </PropertyGroup>
+    <Message Text="building template proj: [$(_cTemplateProj)]" Importance="low"/>
 
-    <Target Name="BuildTemplateNuGetPackages" DependsOnTargets="$(BuildTemplateNuGetPackagesDependsOn)" />
+    <MSBuild Projects="$(_cTemplateProj)" Targets="Restore" />
+    <MSBuild Projects="$(_cTemplateProj)"
+             Targets="Pack;GetNuGetPath"
+             Properties="Configuration=$(Configuration);TemplateOutputPath=$(TemplateOutputPath);IntermediateOutputPath=c:\temp\foo\bar\"
+             Condition=" '$(_cTemplateProj)' != '' ">
+      <Output
+          TaskParameter="TargetOutputs"
+          ItemName="templateOutput" />
+    </MSBuild>
 
-    <Target Name="FindTemplatePackProjFiles">
-        <!-- Finds files in the project matching templatepack*.proj -->
-        <ItemGroup>
-            <TemplatePackNuGetProj Include="$(MSBuildProjectDirectory)/**/templatepack*.proj" />
-        </ItemGroup>
-        <Message Text="Templates in [$(MSBuildProjectDirectory)] found: @(TemplatePackNuGetProj)" Importance="low" />
-    </Target>
+    <Message Text="templateOutput: [@(templateOutput)]" Importance="high" />
+  </Target>
 
-    <Target Name="BuildTemplatePackNuGetProjFiles" 
-            Outputs="%(TemplatePackNuGetProj.Identity)">
+  <Target Name="AddTemplateNuGetPackagesToVsix">
+    <!-- Add the produced .zip files to Content so that they are included in the package -->
+    <ItemGroup>
+      <_templateNuGetPkgs Include="$(TemplateOutputPath)**/*.nupkg"
+                          Exclude="$(TemplateNuGetPackagesToExcludeFromVsix)" />
 
-            <PropertyGroup>
-                <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">%(TemplatePackNuGetProj.Identity)</_cTemplateProj>
-                <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">$([System.IO.Path]::GetFullPath('$(_cTemplateProj)'))</_cTemplateProj>
-            </PropertyGroup>
-            <Message Text="building template proj: [$(_cTemplateProj)]" Importance="low"/>            
-            
-            <MSBuild Projects="$(_cTemplateProj)" Targets="Restore" />
-            <MSBuild Projects="$(_cTemplateProj)" 
-                     Targets="Pack;GetNuGetPath"
-                     Properties="Configuration=$(Configuration);TemplateOutputPath=$(TemplateOutputPath);IntermediateOutputPath=c:\temp\foo\bar\"
-                     Condition=" '$(_cTemplateProj)' != '' ">
-                <Output  
-                    TaskParameter="TargetOutputs"  
-                    ItemName="templateOutput" />  
-            </MSBuild>
+      <VSIXSourceItem Include="%(_templateNuGetPkgs.Identity)">
+        <!-- <VSIXSubPath>%(_ls-ItemTemplatesOutputs.OutputPathFolder)</VSIXSubPath> -->
+      </VSIXSourceItem>
+    </ItemGroup>
+  </Target>
 
-            <Message Text="templateOutput: [@(templateOutput)]" Importance="high" />
-    </Target>
-
-    <Target Name="AddTemplateNuGetPackagesToVsix">
-        <!-- Add the produced .zip files to Content so that they are included in the package -->
-        <ItemGroup>
-            <_templateNuGetPkgs Include="$(TemplateOutputPath)**/*.nupkg"
-                                Exclude="$(TemplateNuGetPackagesToExcludeFromVsix)" />
-
-            <VSIXSourceItem Include="%(_templateNuGetPkgs.Identity)">
-                <!-- <VSIXSubPath>%(_ls-ItemTemplatesOutputs.OutputPathFolder)</VSIXSubPath> -->
-            </VSIXSourceItem>
-        </ItemGroup>
-    </Target>
-
-    <!--=====================================================
+  <!--=====================================================
     Targets relating to converting .vstemplate to a template .zip
     =========================================================-->
-    <PropertyGroup>
-        <BuildVsTemplateFilesDependsOn>
-            $(BuildVsTemplateFilesDependsOn);
-            FindVstemplateFiles;
-        </BuildVsTemplateFilesDependsOn>
-    </PropertyGroup>
-    <Target Name="BuildVsTemplateFiles" DependsOnTargets="$(BuildVsTemplateFilesDependsOn)" />
+  <PropertyGroup>
+    <BuildVsTemplateFilesDependsOn>
+      $(BuildVsTemplateFilesDependsOn);
+      FindVstemplateFiles;
+      BuildZipForVstemplateFiles;
+    </BuildVsTemplateFilesDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildVsTemplateFiles" DependsOnTargets="$(BuildVsTemplateFilesDependsOn)" />
 
-    <Target Name="FindVstemplateFiles">
-        <Message Text="Looking for .vstemplate files in [$(TemplateSourceRoot)]" Importance="low" />
-        <ItemGroup>
-            <_vstemplateTemp Include="$(TemplateSourceRoot)**/*.vstemplate" Exclude="$(VsTemplateFilesExclude)" />
-            <VsTemplateFiles Include="$([System.IO.Path]::GetFullPath(' %(_vstemplateTemp.Identity) '))" />
-        </ItemGroup>
-        <Message Text=".vstemplate files found: [@(VsTemplateFiles)]" Importance="low" />
-    </Target>
+  <Target Name="FindVstemplateFiles">
+    <Message Text="Looking for .vstemplate files in [$(TemplateSourceRoot)]" Importance="low" />
+    <ItemGroup>
+      <_vstemplateTemp Include="$(TemplateSourceRoot)**/*.vstemplate" Exclude="$(VsTemplateFilesExclude)" />
+      <VsTemplateFiles Include="$([System.IO.Path]::GetFullPath(' %(_vstemplateTemp.Identity) '))" />
+    </ItemGroup>
+    <Message Text=".vstemplate files found: [@(VsTemplateFiles)]" Importance="low" />
+  </Target>
+
+  <Target Name="BuildZipForVstemplateFiles"
+          Outputs="%(VsTemplateFiles.Identity)">
+
+    <!--
+        1. Add standard icon files to new zip created
+        2. Add all files in same dir as .vstemplate to the zip
+      -->
+    <PropertyGroup>
+      <_zipoutfile>$(TemplateOutputPath)$(MSBuildProjectName).zip</_zipoutfile>
+      <_ziprootdir>%(VsTemplateZipDefaultFiles.RootDir)%(VsTemplateZipDefaultFiles.Directory)</_ziprootdir>
+      <_vstemplatedir>$([System.IO.Path]::GetFullPath('%(VsTemplateFiles.RootDir)%(VsTemplateFiles.Directory)'))</_vstemplatedir>
+    </PropertyGroup>
+
+    <Message Text="Making vstemplate zip file at [$(_zipoutfile)]" Importance="high"/>
+    <AddToZipTask
+      ZipFilePath="$(_zipoutfile)"
+      FilesToAdd="@(VsTemplateZipDefaultFiles)"
+      RootFolder="$(_ziprootdir)" />
+
+    <ItemGroup>
+      <_templatefilestoadd Remove="@(_templatefilestoadd)"/>
+      <_templatefilestoadd Include="$(_vstemplatedir)**/*"/>
+    </ItemGroup>
+    <AddToZipTask
+      ZipFilePath="$(_zipoutfile)"
+      FilesToAdd="@(_templatefilestoadd)"
+      RootFolder="$(_vstemplatedir)"
+      Condition=" '@(_templatefilestoadd)' != ' ' "/>
+      
+    <!-- Add the zip to the vsix being created -->
+    <ItemGroup>
+      <VSIXSourceItem Include="$(_zipoutfile)">
+        <!-- <VSIXSubPath>%(_ls-ItemTemplatesOutputs.OutputPathFolder)</VSIXSubPath> -->
+      </VSIXSourceItem>
+    </ItemGroup>
+  </Target>
 
   <!--=====================================================
     Inline Tasks
