@@ -82,9 +82,16 @@
 
   <Target Name="MyTarget">
     <Message Text="In mytarget2" Importance="high" />
-    <AddToZipTask
-        ZipFilePath="C:\temp\foobar.zip"
-        FilesToAdd="C:\data\mycode\sidewafflev2\src\SideWafflev2\SideWaffleTasks\test-AddToZipTask.proj;C:\data\mycode\sidewafflev2\src\SideWafflev2\SideWaffleTasks\AddToZipTask.cs"
-        RootFolder="C:\data\mycode\sidewafflev2\src\SideWafflev2\SideWaffleTasks\" />
+    <PropertyGroup>
+      <_npdNodeXpath>dft:VSTemplate/dft:TemplateContent/dft:CustomParameters/dft:CustomParameter[@Name='SideWaffleNewProjNode']/@Value</_npdNodeXpath>
+      <_ls-templateFilePath>%(ls-VsNewProjTemplateFiles.FullPath)</_ls-templateFilePath>
+      <ls-VsTemplateXmlSchema Condition=" '$(ls-VsTemplateXmlSchema)'=='' ">http://schemas.microsoft.com/developer/vstemplate/2005</ls-VsTemplateXmlSchema>
+    </PropertyGroup>
+    <XmlPeek Namespaces="&lt;Namespace Prefix='dft' Uri='$(ls-VsTemplateXmlSchema)'/&gt;"
+             XmlInputPath="C:\data\mycode\sidewafflev2\01-basic-template\MyProject.Con\.template.config\AzureFunctions.vstemplate"
+             Query="dft:VSTemplate/dft:TemplateContent/dft:CustomParameters/dft:CustomParameter[@Name='SideWaffleNewProjNode']/@Value">
+      <Output TaskParameter="Result" PropertyName="_lsResult"/>
+    </XmlPeek>
+    <Message Text="Result: [$(_lsResult)]" Importance="high" />
   </Target>
 </Project>
