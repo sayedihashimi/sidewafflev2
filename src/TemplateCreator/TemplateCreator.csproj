@@ -54,6 +54,7 @@
     <Compile Include="Shared\InfoCollectorDialog.xaml.cs">
       <DependentUpon>InfoCollectorDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Shared\TemplateCreator.cs" />
     <Compile Include="Shared\TemplateGenerator.cs" />
     <Compile Include="Shared\VsHelpers.cs" />
     <Compile Include="source.extension.cs">
@@ -201,6 +202,7 @@
     <Content Include="Resources\Icon.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="sample.vstemplate" />
     <Content Include="source.extension.ico">
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
     </Content>

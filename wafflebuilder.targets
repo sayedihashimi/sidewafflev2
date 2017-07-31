@@ -67,13 +67,15 @@
     <PropertyGroup>
       <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">%(TemplatePackNuGetProj.Identity)</_cTemplateProj>
       <_cTemplateProj Condition=" '%(TemplatePackNuGetProj.Identity)' != '' ">$([System.IO.Path]::GetFullPath('$(_cTemplateProj)'))</_cTemplateProj>
+      <_templateOutputPathFull>$([System.IO.Path]::GetFullPath('$(TemplateOutputPath)'))</_templateOutputPathFull>
     </PropertyGroup>
+    <Message Text="_templateOutputPathFull: $(_templateOutputPathFull)" />
     <Message Text="building template proj: [$(_cTemplateProj)]" Importance="low"/>
 
     <MSBuild Projects="$(_cTemplateProj)" Targets="Restore" />
     <MSBuild Projects="$(_cTemplateProj)"
              Targets="Pack;GetNuGetPath"
-             Properties="Configuration=$(Configuration);TemplateOutputPath=$(TemplateOutputPath);IntermediateOutputPath=c:\temp\foo\bar\"
+             Properties="Configuration=$(Configuration);PackageOutputPath=$(_templateOutputPathFull)"
              Condition=" '$(_cTemplateProj)' != '' ">
       <Output
           TaskParameter="TargetOutputs"
@@ -85,10 +87,16 @@
 
   <Target Name="AddTemplateNuGetPackagesToVsix">
     <!-- Add the produced .zip files to Content so that they are included in the package -->
+    <PropertyGroup>
+      <_templateOutputFullpath>$([System.IO.Path]::GetFullPath('$(TemplateOutputPath)'))</_templateOutputFullpath>
+    </PropertyGroup>
+    <Message Text="_templateOutputFullpath: [$(_templateOutputFullpath)]" />
     <ItemGroup>
-      <_templateNuGetPkgs Include="$(TemplateOutputPath)**/*.nupkg"
+      <_templateNuGetPkgs Include="$(_templateOutputFullpath)**/*.nupkg"
                           Exclude="$(TemplateNuGetPackagesToExcludeFromVsix)" />
-
+    </ItemGroup>
+    <Message Text="_templateNuGetPkgs: @(_templateNuGetPkgs)" />
+    <ItemGroup>
       <VSIXSourceItem Include="%(_templateNuGetPkgs.Identity)">
         <!-- <VSIXSubPath>%(_ls-ItemTemplatesOutputs.OutputPathFolder)</VSIXSubPath> -->
       </VSIXSourceItem>
@@ -210,7 +218,12 @@
                     Log.LogWarning("Unable to parse compression level [{0}]. Error [{1}]", Compression, ex.ToString());
                 }
             }
-            
+
+            string parentDir = Path.GetDirectoryName(ZipFilePath);
+            if (!Directory.Exists(parentDir)) {
+                Directory.CreateDirectory(parentDir);
+            }
+
             using (ZipArchive zip = ZipFile.Open(ZipFilePath, System.IO.Compression.ZipArchiveMode.Update)) {
                 Uri rootFolderUri = new Uri(RootFolder);
                 // add each input file to the zip

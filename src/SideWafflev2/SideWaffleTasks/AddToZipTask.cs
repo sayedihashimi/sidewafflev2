@@ -28,6 +28,11 @@ namespace SideWaffleTasks
                 }
             }
 
+            string parentDir = Path.GetDirectoryName(ZipFilePath);
+            if (!Directory.Exists(parentDir)) {
+                Directory.CreateDirectory(parentDir);
+            }
+
             using (ZipArchive zip = ZipFile.Open(ZipFilePath, System.IO.Compression.ZipArchiveMode.Update)) {
                 Uri rootFolderUri = new Uri(RootFolder);
                 // add each input file to the zip
