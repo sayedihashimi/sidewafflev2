@@ -32,7 +32,7 @@ namespace SideWaffleTasks
             if (!Directory.Exists(parentDir)) {
                 Directory.CreateDirectory(parentDir);
             }
-
+            // System.Diagnostics.Debugger.Launch();
             using (ZipArchive zip = ZipFile.Open(ZipFilePath, System.IO.Compression.ZipArchiveMode.Update)) {
                 Uri rootFolderUri = new Uri(RootFolder);
                 // add each input file to the zip
@@ -52,7 +52,7 @@ namespace SideWaffleTasks
                     // if the file is already in the zip remove it and add again
                     if (zip.Entries != null) {
                         foreach (var entry in zip.Entries) {
-                            if (entry.Name.Equals(relpath, StringComparison.OrdinalIgnoreCase)) {
+                            if (entry.FullName.Equals(relpath, StringComparison.OrdinalIgnoreCase)) {
                                 entriesToDelete.Add(entry);
                             }
                         }

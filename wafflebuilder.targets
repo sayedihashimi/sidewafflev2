@@ -112,36 +112,67 @@
       FindVstemplateFiles;
       BuildZipForVstemplateFiles;
     </BuildVsTemplateFilesDependsOn>
+    <VsTemplateFilesExclude>
+      $(VsTemplateFilesExclude);
+      $(TemplateSourceRoot)**\bin\**\*;
+      $(TemplateSourceRoot)**\obj\**\*;
+    </VsTemplateFilesExclude>
   </PropertyGroup>
   <Target Name="BuildVsTemplateFiles" DependsOnTargets="$(BuildVsTemplateFilesDependsOn)" />
 
   <Target Name="FindVstemplateFiles">
-    <Message Text="Looking for .vstemplate files in [$(TemplateSourceRoot)]" Importance="low" />
+    <Message Text="Looking for .vstemplate files in [$(TemplateSourceRoot)]
+VsTemplateFilesExclude:[$(VsTemplateFilesExclude)]" Importance="low" />
     <ItemGroup>
-      <_vstemplateTemp Include="$(TemplateSourceRoot)**/*.vstemplate" Exclude="$(VsTemplateFilesExclude)" />
+      <_vsTemplateExcludeFiles Include="$(VsTemplateFilesExclude)"/>
+      <_vstemplateTemp Include="$(TemplateSourceRoot)**/*.vstemplate" Exclude="@(_vsTemplateExcludeFiles)" />
+
       <VsTemplateFiles Include="$([System.IO.Path]::GetFullPath(' %(_vstemplateTemp.Identity) '))" />
     </ItemGroup>
+    <Message Text="_vstemplateTemp: [@(_vstemplateTemp)]" Importance="low" />
+    <Message Text="_vsTemplateExcludeFiles: @(_vsTemplateExcludeFiles)" Importance="low"/>
     <Message Text=".vstemplate files found: [@(VsTemplateFiles)]" Importance="low" />
   </Target>
 
   <PropertyGroup>
     <_templateGetNewProjectNodeXpath Condition=" '$(_templateGetNewProjectNodeXpath)'=='' ">dft:VSTemplate/dft:TemplateContent/dft:CustomParameters/dft:CustomParameter[@Name='SideWaffleNewProjNode']/@Value</_templateGetNewProjectNodeXpath>
   </PropertyGroup>
+
+  <Target Name="DebugInfo"
+          Outputs="%(VsTemplateFiles.Identity)" DependsOnTargets="FindVstemplateFiles">
+    <Message Text="BuildZipForVstemplateFiles:VsTemplateFiles: [@(VsTemplateFiles)] " Importance="high" />
+    <PropertyGroup>
+      <_filename>%(VsTemplateFiles.Filename)</_filename>
+      <_zipoutfile>$(TemplateOutputPath)$(_filename).zip</_zipoutfile>
+      <_ziprootdir>%(VsTemplateZipDefaultFiles.RootDir)%(VsTemplateZipDefaultFiles.Directory)</_ziprootdir>
+      <_vstemplatedir>$([System.IO.Path]::GetFullPath('%(VsTemplateFiles.RootDir)%(VsTemplateFiles.Directory)'))</_vstemplatedir>
+      <_vstemplatefullpath>$([System.IO.Path]::GetFullPath('%(VsTemplateFiles.Fullpath)'))</_vstemplatefullpath>
+    </PropertyGroup>
+    <Message Text="
+_filename: $(_filename)
+_zipoutfile : $(_zipoutfile)
+_ziprootdir :$(_ziprootdir)
+_vstemplatedir: $(_vstemplatedir)
+_vstemplatefullpath: $(_vstemplatefullpath)
+" Importance="high"/>
+  </Target>
   
   <Target Name="BuildZipForVstemplateFiles"
-          Outputs="%(VsTemplateFiles.Identity)">
-
+          Outputs="%(VsTemplateFiles.Identity)" DependsOnTargets="FindVstemplateFiles">
+    <Message Text="BuildZipForVstemplateFiles:VsTemplateFiles: [@(VsTemplateFiles)] " Importance="high" />
     <!--
         1. Add standard icon files to new zip created
         2. Add all files in same dir as .vstemplate to the zip
-      -->
+    -->
     <PropertyGroup>
-      <_zipoutfile>$(TemplateOutputPath)$(MSBuildProjectName).zip</_zipoutfile>
+      <_filename>%(VsTemplateFiles.Filename)</_filename>
+      <_zipoutfile>$(TemplateOutputPath)$(_filename).zip</_zipoutfile>
       <_ziprootdir>%(VsTemplateZipDefaultFiles.RootDir)%(VsTemplateZipDefaultFiles.Directory)</_ziprootdir>
       <_vstemplatedir>$([System.IO.Path]::GetFullPath('%(VsTemplateFiles.RootDir)%(VsTemplateFiles.Directory)'))</_vstemplatedir>
       <_vstemplatefullpath>$([System.IO.Path]::GetFullPath('%(VsTemplateFiles.Fullpath)'))</_vstemplatefullpath>
     </PropertyGroup>
 
+    <!--<Delete Files="$(_zipoutfile)" Condition="Exists('$(_zipoutfile)')" />-->
     <Message Text="Making vstemplate zip file at [$(_zipoutfile)]" Importance="high"/>
     <AddToZipTask
       ZipFilePath="$(_zipoutfile)"
@@ -193,7 +224,8 @@
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(MSBuildFrameworkToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(windir)\Microsoft.NET\Framework\v4.0.30319\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
   </PropertyGroup>
-  <UsingTask TaskName="AddToZipTask" TaskFactory="CodeTaskFactory" AssemblyFile="$(ls-msbuildtasks-path)">
+  <UsingTask TaskName="AddToZipTask" AssemblyFile="C:\data\mycode\sidewafflev2\src\SideWafflev2\SideWaffleTasks\bin\Debug\SideWaffleTasks.dll"/>
+  <UsingTask TaskName="AddToZipTaskOld" TaskFactory="CodeTaskFactory" AssemblyFile="$(ls-msbuildtasks-path)">
     <ParameterGroup>
       <ZipFilePath ParameterType="System.String" Required="true" />
       <FilesToAdd ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
