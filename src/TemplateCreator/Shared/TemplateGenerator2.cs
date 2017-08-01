@@ -4,13 +4,13 @@ using System.Xml.Linq;
 using EnvDTE;
 using Newtonsoft.Json.Linq;
 using System;
-
+using System.Collections.Generic;
 
 namespace TemplateCreator.Shared {
-    public class TemplateCreator {
+    public class TemplateGenerator2 {
         private JObject _templateInfo { get; set; }
-        public void AddMissingFiles(Project proj) {
-            if(proj == null) {
+        public IList<string> AddMissingFiles(Project proj) {
+            if (proj == null) {
                 throw new ArgumentNullException("proj");
             }
 
@@ -21,56 +21,69 @@ namespace TemplateCreator.Shared {
                 Directory.CreateDirectory(templateJsonDir);
             }
             // see which files are missing and add then create those
-            
+
             bool hasTemplateJsonFile = File.Exists(Path.Combine(templateJsonDir, "template.json"));
             bool hasVsHostFile = File.Exists(Path.Combine(templateJsonDir, $"{projectName}.vstemplate"));
             bool hasVstemplateFile = File.Exists(Path.Combine(templateJsonDir, "vs-2017.3.host.json"));
             bool hasCliHostFile = File.Exists(Path.Combine(templateJsonDir, "dotnetcli.host.json"));
 
-            if(hasTemplateJsonFile && 
+            if (hasTemplateJsonFile &&
                 hasVsHostFile &&
                 hasVstemplateFile &&
                 hasCliHostFile) {
                 // nothing to do
-                return;
+                return null;
             }
 
+            IList<string> filesCreated = new List<string>();
             JObject templateData = GetTemplateJsonDataFromUser(proj);
-            CreateTemplateJsonIfNotExists(Path.Combine(templateJsonDir, "template.json"), proj.FullName, templateData);
+            filesCreated.Add(
+                CreateTemplateJsonIfNotExists(Path.Combine(templateJsonDir, "template.json"), proj.FullName, templateData));
+            filesCreated.Add(
+                CreateVsTemplateFileIfNotExists(Path.Combine(templateJsonDir, "template.vstemplate"), proj.FullName, templateData));
 
+            return (from file in filesCreated
+                    where !string.IsNullOrWhiteSpace(file)
+                    select file).ToList();
         }
 
-        private void CreateTemplateJsonIfNotExists(string templateJsonPath,string projectFilepath,JObject templateData) {
-            if(templateJsonPath == null) {
+        private string CreateTemplateJsonIfNotExists(string templateJsonPath, string projectFilepath, JObject templateData) {
+            if (templateJsonPath == null) {
                 throw new ArgumentNullException("filepath");
             }
-            if(templateData == null) {
+            if (templateData == null) {
                 throw new ArgumentNullException("templateData");
             }
 
             if (File.Exists(templateJsonPath)) {
-                return;
+                return null;
             }
 
             File.WriteAllText(templateJsonPath, templateData.ToString());
+            return templateJsonPath;
         }
 
-        private void CreateVsTemplateFileIfNotExists(string vstemplateFilepath, string projectFilepath, JObject templateData) {
+        private string CreateVsTemplateFileIfNotExists(string vstemplateFilepath, string projectFilepath, JObject templateData) {
             if (string.IsNullOrWhiteSpace(vstemplateFilepath)) {
                 throw new ArgumentNullException("vstemplateFilepath");
             }
-            if(templateData == null) {
+            if (templateData == null) {
                 throw new ArgumentNullException("templateData");
             }
 
             if (File.Exists(vstemplateFilepath)) {
-                return;
+                return null;
             }
-
-
+            // name, description, templateid
+            string name = templateData["name"].Value<string>();
+            string desc = templateData["description"].Value<string>();
+            string templateId = templateData["identity"].Value<string>();
+            var templateContent = string.Format(_vstemplateFile, name, desc, templateId);
+            File.WriteAllText(vstemplateFilepath, templateContent);
+            return vstemplateFilepath;
         }
 
-            private JObject GetTemplateJsonDataFromUser(Project proj) {
+        private JObject GetTemplateJsonDataFromUser(Project proj) {
             if (_templateInfo == null) {
                 string fullPath = proj.FullName;
                 string name = Path.GetFileNameWithoutExtension(fullPath);
@@ -117,5 +130,39 @@ namespace TemplateCreator.Shared {
             XElement element = doc.Descendants().FirstOrDefault(x => x.Name.LocalName == "ProjectGuid");
             return element?.Value;
         }
+
+        private string _vstemplateFile = $@"
+<VSTemplate Version=""3.0.0"" xmlns=""http://schemas.microsoft.com/developer/vstemplate/2005"" Type=""ProjectGroup"">
+  <TemplateData>
+    <Name>{0}</Name>
+    <Description>{1}</Description>
+    <TemplateID>{2}</TemplateID>
+    <DefaultName>NewProject</DefaultName>
+    
+    <Icon>project-icon.png</Icon>
+    
+    <ProjectType>CSharp</ProjectType>
+    <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
+    <SortOrder>5000</SortOrder>
+    <CreateNewFolder>true</CreateNewFolder>
+    <ProvideDefaultName>true</ProvideDefaultName>
+    <LocationField>Enabled</LocationField>
+    <EnableLocationBrowseButton>true</EnableLocationBrowseButton>
+  </TemplateData>
+  <TemplateContent>
+    <ProjectCollection/>
+    <CustomParameters>
+      <CustomParameter Name = ""$language$"" Value=""CSharp"" />
+      <CustomParameter Name = ""$uistyle$"" Value=""none""/>
+      <CustomParameter Name = ""$groupid$"" Value=""MyProject.01.Sample"" />
+      <CustomParameter Name = ""SideWaffleNewProjNode"" Value=""CSharp\Web\SideWaffle""/>
+    </CustomParameters>
+  </TemplateContent>
+  <WizardExtension>
+    <Assembly>Microsoft.VisualStudio.TemplateEngine.Wizard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</Assembly>
+    <FullClassName>Microsoft.VisualStudio.TemplateEngine.Wizard.TemplateEngineWizard</FullClassName>
+  </WizardExtension>
+</VSTemplate>
+";
     }
 }

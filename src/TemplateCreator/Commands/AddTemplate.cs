@@ -3,6 +3,9 @@ using System.ComponentModel.Design;
 using System.IO;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
+using TemplateCreator.Shared;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace TemplateCreator
 {
@@ -54,23 +57,16 @@ namespace TemplateCreator
 
         private void Execute(object sender, EventArgs e)
         {
-            string json = TemplateGenerator.CreateProjectTemplate(_project);
+            // new TemplateGenerator2().AddMissingFiles(_project);
+            IList<string> filesAdded = new TemplateGenerator2().AddMissingFiles(_project);
 
-            if (string.IsNullOrEmpty(json))
-            {
-                System.Diagnostics.Debug.Write("Could not generate the template");
-                return;
+            if (filesAdded != null) {
+                foreach (var file in filesAdded) {
+                    if (!string.IsNullOrEmpty(file)) {
+                        VsHelpers.OpenFileAndRefresh(file);
+                    }
+                }
             }
-
-            string root = _project.GetRootFolder();
-
-            string templateFile = Path.Combine(root, Constants.Folder, Constants.TemplateFileName);
-            string folder = Path.GetDirectoryName(templateFile);
-
-            Directory.CreateDirectory(folder);
-            File.WriteAllText(templateFile, json);
-
-            VsHelpers.OpenFileAndRefresh(templateFile);            
         }
     }
 }

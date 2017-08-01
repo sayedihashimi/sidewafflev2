@@ -22,9 +22,12 @@
 
   <!--
         templatepack.proj files go into the TemplatePackNuGetProj item list
-    -->
+  -->
+  <PropertyGroup>
+    <WaffleDefaultNuGetPkgFilesDir Condition=" '$(WaffleDefaultNuGetPkgFilesDir)'=='' ">$(MSBuildThisFileDirectory)</WaffleDefaultNuGetPkgFilesDir>
+  </PropertyGroup>
   <ItemGroup>
-    <VsTemplateZipDefaultFiles Include="C:\data\mycode\sidewafflev2\project-icon.png"/>
+    <VsTemplateZipDefaultFiles Include="$(WaffleDefaultNuGetPkgFilesDir)project-icon.png"/>
   </ItemGroup>
 
   <PropertyGroup>
