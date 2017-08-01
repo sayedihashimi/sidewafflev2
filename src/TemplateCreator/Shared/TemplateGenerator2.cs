@@ -84,7 +84,7 @@ namespace TemplateCreator.Shared {
         }
 
         private JObject GetTemplateJsonDataFromUser(Project proj) {
-            if (_templateInfo == null) {
+            //if (_templateInfo == null) {
                 string fullPath = proj.FullName;
                 string name = Path.GetFileNameWithoutExtension(fullPath);
                 var win = new InfoCollectorDialog(name);
@@ -120,7 +120,7 @@ namespace TemplateCreator.Shared {
 
                     _templateInfo = o;
                 }
-            }
+            //}
 
             return _templateInfo;
         }
@@ -131,7 +131,7 @@ namespace TemplateCreator.Shared {
             return element?.Value;
         }
 
-        private string _vstemplateFile = $@"
+        private string _vstemplateFile = @"
 <VSTemplate Version=""3.0.0"" xmlns=""http://schemas.microsoft.com/developer/vstemplate/2005"" Type=""ProjectGroup"">
   <TemplateData>
     <Name>{0}</Name>

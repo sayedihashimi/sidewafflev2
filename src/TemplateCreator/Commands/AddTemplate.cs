@@ -42,17 +42,18 @@ namespace TemplateCreator
         private void BeforeQueryStatus(object sender, EventArgs e)
         {
             var button = (OleMenuCommand)sender;
-            button.Enabled = button.Visible = false;
+            // button.Enabled = button.Visible = false;
+            button.Enabled = button.Visible = true;
 
             _project = VsHelpers.DTE.SelectedItems.Item(1)?.Project;
-            string root = _project?.GetRootFolder();
+            //string root = _project?.GetRootFolder();
 
-            if (string.IsNullOrEmpty(root))
-                return;
+            //if (string.IsNullOrEmpty(root))
+            //    return;
 
-            string templateFile = Path.Combine(root, Constants.Folder, Constants.TemplateFileName);
+            //string templateFile = Path.Combine(root, Constants.Folder, Constants.TemplateFileName);
 
-            button.Enabled = button.Visible = !File.Exists(templateFile);
+            // button.Enabled = button.Visible = !File.Exists(templateFile);
         }
 
         private void Execute(object sender, EventArgs e)
