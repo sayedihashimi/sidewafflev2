@@ -73,9 +73,10 @@
     <Message Text="building template proj: [$(_cTemplateProj)]" Importance="low"/>
 
     <MSBuild Projects="$(_cTemplateProj)" Targets="Restore" />
+    <Message Text="Outer2:TemplateSourceRoot: [$(TemplateSourceRoot)]" Importance="high"/>
     <MSBuild Projects="$(_cTemplateProj)"
-             Targets="Pack;GetNuGetPath"
-             Properties="Configuration=$(Configuration);PackageOutputPath=$(_templateOutputPathFull)"
+             Targets="Pack;GetNuGetPath;DebugInfo"
+             Properties="Configuration=$(Configuration);TemplateSourceRoot=$(TemplateSourceRoot);PackageOutputPath=$(_templateOutputPathFull)"
              Condition=" '$(_cTemplateProj)' != '' ">
       <Output
           TaskParameter="TargetOutputs"
@@ -224,8 +225,8 @@ _vstemplatefullpath: $(_vstemplatefullpath)
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(MSBuildFrameworkToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
     <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(windir)\Microsoft.NET\Framework\v4.0.30319\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
   </PropertyGroup>
-  <UsingTask TaskName="AddToZipTask" AssemblyFile="C:\data\mycode\sidewafflev2\src\SideWafflev2\SideWaffleTasks\bin\Debug\SideWaffleTasks.dll"/>
-  <UsingTask TaskName="AddToZipTaskOld" TaskFactory="CodeTaskFactory" AssemblyFile="$(ls-msbuildtasks-path)">
+  <!--<UsingTask TaskName="AddToZipTask" AssemblyFile="C:\data\mycode\sidewafflev2\src\SideWafflev2\SideWaffleTasks\bin\Debug\SideWaffleTasks.dll"/>-->
+  <UsingTask TaskName="AddToZipTask" TaskFactory="CodeTaskFactory" AssemblyFile="$(ls-msbuildtasks-path)">
     <ParameterGroup>
       <ZipFilePath ParameterType="System.String" Required="true" />
       <FilesToAdd ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
@@ -255,7 +256,7 @@ _vstemplatefullpath: $(_vstemplatefullpath)
             if (!Directory.Exists(parentDir)) {
                 Directory.CreateDirectory(parentDir);
             }
-
+            // System.Diagnostics.Debugger.Launch();
             using (ZipArchive zip = ZipFile.Open(ZipFilePath, System.IO.Compression.ZipArchiveMode.Update)) {
                 Uri rootFolderUri = new Uri(RootFolder);
                 // add each input file to the zip
@@ -275,7 +276,7 @@ _vstemplatefullpath: $(_vstemplatefullpath)
                     // if the file is already in the zip remove it and add again
                     if (zip.Entries != null) {
                         foreach (var entry in zip.Entries) {
-                            if (entry.Name.Equals(relpath, StringComparison.OrdinalIgnoreCase)) {
+                            if (entry.FullName.Equals(relpath, StringComparison.OrdinalIgnoreCase)) {
                                 entriesToDelete.Add(entry);
                             }
                         }

@@ -17,8 +17,9 @@
     <ExcludeFromPackage Include="$(TemplateSourceRoot)**/*.user" />
     <ExcludeFromPackage Include="$(TemplateSourceRoot)**/*.suo" />
     <ExcludeFromPackage Include="$(TemplateSourceRoot)**/*.vs/**/*" />
+    <ExcludeFromPackage Include="$(TemplateSourceRoot)**/*.git/**/*" />
 
-    <TemplateFiles  Include="$(MSBuildThisFileDirectory)/**/*" 
+    <TemplateFiles  Include="$(TemplateSourceRoot)/**/*" 
                     Exclude="@(ExcludeFromPackage)" />
   </ItemGroup>
 
@@ -40,6 +41,8 @@
   <Target Name="GetNuGetPath" Outputs="@(NuGetPackOutput)">
     <Message Text="NuGetPackOutput: [@(NuGetPackOutput)]" Importance="high"/>
   </Target>
-
+  <Target Name="DebugInfo" BeforeTargets="Build;Pack">
+    <Message Text="Inner:TemplateSourceRoot: [$(TemplateSourceRoot)]" Importance="high"/>
+  </Target>
   <!-- created with SideWaffle -->
 </Project>
