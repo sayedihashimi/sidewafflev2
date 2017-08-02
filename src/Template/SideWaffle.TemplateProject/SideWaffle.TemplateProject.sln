@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26801.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SideWaffle.TemplateProject", "SideWaffle.TemplateProject\SideWaffle.TemplateProject.csproj", "{405FA803-D8FE-4B96-A4AE-927FBBF7AB68}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{405FA803-D8FE-4B96-A4AE-927FBBF7AB68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{405FA803-D8FE-4B96-A4AE-927FBBF7AB68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{405FA803-D8FE-4B96-A4AE-927FBBF7AB68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{405FA803-D8FE-4B96-A4AE-927FBBF7AB68}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {24F0A65E-B778-40BE-8CD3-9328C7039DF3}
+	EndGlobalSection
+EndGlobal

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="SideWafflTemplateVsixProject.36068cfb-e9fe-44c7-8885-862ef2549ff6" Version="1.0" Language="en-US" Publisher="Sayed Ibrahim Hashimi" />
-    <DisplayName>SideWafflTemplateVsixProject</DisplayName>
+    <Identity Id="SideWaffle.TemplateProject.0b1198c6-439f-4877-a793-709048dbe879" Version="1.0" Language="en-US" Publisher="Sayed Ibrahim Hashimi" />
+    <DisplayName>SideWaffle.TemplateProject</DisplayName>
     <Description>Empty VSIX Project.</Description>
   </Metadata>
   <Installation>
@@ -14,4 +14,8 @@
   <Prerequisites>
     <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
   </Prerequisites>
+    <Assets>
+    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+    <Asset Type="Microsoft.VisualStudio.ProjectTemplate" Path="Output\Templates" />
+  </Assets>
 </PackageManifest>
