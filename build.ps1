@@ -98,6 +98,11 @@ function CopyFiles{
             $dest = $file.Dest
 
             EnsureDirectoryExists (Split-Path $dest -Parent)
+            @'
+Copy
+    src:  {0}
+    dest: {1}
+'@ -f $src, $dest  | Write-Verbose
             Copy-Item -LiteralPath $src -Destination $dest
         }
     }
@@ -113,6 +118,14 @@ function CopyStaticFilesToOtherProjects{
         $filesToCopy = @{
             'Source'=(Join-Path $srcRoot 'templatepack.proj')
             'Dest' = (join-path $srcRoot 'src\Template\SideWaffle.TemplateProject\SideWaffle.TemplateProject\template\templatepack.proj')
+        },
+        @{
+            'Source'=(Join-Path $srcRoot 'wafflebuilder.targets')
+            'Dest' = (join-path $srcRoot 'src\Template\SideWaffle.TemplateProject\SideWaffle.TemplateProject\Properties\wafflebuilder.targets')
+        },
+        @{
+            'Source'=(Join-Path $srcRoot 'wafflebuilder.targets')
+            'Dest' = (join-path $srcRoot 'src\Template\TemplateCreator\TemplateCreator\Properties\wafflebuilder.targets')
         }
 
         CopyFiles -files $filesToCopy
@@ -123,6 +136,7 @@ function BuildAll{
     [cmdletbinding()]
     param()
     process{
+        'Build started' | Write-Output
         CopyStaticFilesToOtherProjects
     }
 }

@@ -1,10 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!--/-:cnd -->
   <PropertyGroup>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
-    <!--/-:cnd -->
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-    <!--/-:cnd -->
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -49,6 +48,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Properties\wafflebuilder.targets" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -62,15 +62,17 @@
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!--/-:cnd -->
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
-  <!--/-:cnd -->
-  <Import Project="..\packages\WaffleBuilder.0.0.1-beta\build\wafflebuilder.targets" Condition="Exists('..\packages\WaffleBuilder.0.0.1-beta\build\wafflebuilder.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+  <PropertyGroup>
+    <WaffleBuilderTargetsPath Condition=" '$(WaffleBuilderTargetsPath)'=='' ">$(MSBuildProjectDirectory)\Properties\wafflebuilder.targets</WaffleBuilderTargetsPath>
+  </PropertyGroup>
+  <Import Project="$(WaffleBuilderTargetsPath)" Condition="Exists('$(WaffleBuilderTargetsPath)')" />
+  <!--/-:cnd --><Target Name="WarnOnMissingWaffleBuilderTargets" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\WaffleBuilder.0.0.1-beta\build\wafflebuilder.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WaffleBuilder.0.0.1-beta\build\wafflebuilder.targets'))" />
+    <Warn Condition="!Exists('$(WaffleBuilderTargetsPath)')" 
+          Text="wafflebuilder.targets not found at [$(WaffleBuilderTargetsPath)]" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
