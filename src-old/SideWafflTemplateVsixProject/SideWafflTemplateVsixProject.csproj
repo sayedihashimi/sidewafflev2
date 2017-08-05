@@ -51,6 +51,7 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="template\templatepack.proj" />
+	<None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="index.html" />
